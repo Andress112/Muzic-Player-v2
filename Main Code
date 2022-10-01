@@ -93,24 +93,31 @@ Muzic_List = ["Blak"]
 Songs_count = 0
 Has_loaded_songs = False
 StartUp = True
+Already_loaded = []
 def Add_Muzic():
     global No_Muzic_Loaded_Error
+    global Already_loaded
     Muzic_Folder = promter.dir()
-    Muzic_Files = os.listdir(Muzic_Folder)
-    global Songs_count
-    Songs_count = len(Muzic_Files)
-    global Has_loaded_songs
-    for i in Muzic_Files:
-        Muzic_list_prep = (f"{Muzic_Folder}\{i}")
-        Muzic_List.append(Muzic_list_prep)
-    Has_loaded_songs = True
-    global StartUp
-    if StartUp == True:
-        mixer.music.load(Muzic_List[1])
-        mixer.music.play(Repeat_active)
-        mixer.music.pause()
-        StartUp = False
-    No_Muzic_Loaded_Error = False
+    if Muzic_Folder in Already_loaded:
+        print("That folder is already loaded !")
+        return
+    else:
+        Already_loaded.append(Muzic_Folder)
+        Muzic_Files = os.listdir(Muzic_Folder)
+        global Songs_count
+        Songs_count = len(Muzic_Files)
+        global Has_loaded_songs
+        for i in Muzic_Files:
+            Muzic_list_prep = (f"{Muzic_Folder}\{i}")
+            Muzic_List.append(Muzic_list_prep)
+        Has_loaded_songs = True
+        global StartUp
+        if StartUp == True:
+            mixer.music.load(Muzic_List[1])
+            mixer.music.play(Repeat_active)
+            mixer.music.pause()
+            StartUp = False
+        No_Muzic_Loaded_Error = False
 
 No_Muzic_Loaded_Error = False
 def No_music_loaded():
