@@ -211,6 +211,11 @@ def Reverse():
     elif Has_loaded_songs == False:
         No_music_loaded()
 
+def Replay_Last_song():
+    mixer.music.play(Repeat_active)
+    if Muzic_Paused == True:
+        mixer.music.pause()
+
 mixer.music.set_volume(0.5)
 Current_Volume = 5
 Muted = False
@@ -285,6 +290,7 @@ def main():
     Run = True
     FPS = 13
     Clock = pygame.time.Clock()
+    dbclock = pygame.time.Clock()
 
     while Run:
         Clock.tick(FPS)
@@ -296,9 +302,10 @@ def main():
                 Run = False
                 print("Quiting the program!")
                 break
-            if event.type == mixer.music.get_endevent():
+            if event.type == mixer.music.get_endevent() and not Repeat_active == -1:
                 Next()
                 songs_count_and_curently_playing()
+
 
         #filling the screen with a colors
         screen.fill(Purple)
@@ -385,3 +392,4 @@ def main():
 #Calling the main loop
 main()
 pygame.quit()
+mixer.quit()
