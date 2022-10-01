@@ -1,0 +1,387 @@
+import pygame
+from pygame.event import Event
+from pygame import mixer
+import os
+import random
+import promptlib
+
+#Initialaizing the modules
+pygame.init()
+pygame.font.init()
+mixer.init()
+promter = promptlib.Files()
+
+#Setting the screen height and width
+SCREEN_HEIGHT = 700
+SCREEN_WIDTH = 400
+
+#Creating the screen
+screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
+pygame.display.set_caption("Dragon Player")
+Logo = pygame.image.load("Images/Logo.png").convert_alpha()
+pygame.display.set_icon(Logo)
+
+#Colors
+Purple = (64,64,80)
+
+#Loading all images
+Exit_But = pygame.image.load("Images/Off.png").convert_alpha()
+Paus_But = pygame.image.load("Images/Paus.png").convert_alpha()
+Reverse_But = pygame.image.load("Images/Reverse.png").convert_alpha()
+Next_But = pygame.image.load("Images/Next.png").convert_alpha()
+Vol_Down_But = pygame.image.load("Images/Volume_down.png").convert_alpha()
+Vol_Up_But = pygame.image.load("Images/Volume_up.png").convert_alpha()
+Mute_But = pygame.image.load("Images/Mute.png").convert_alpha()
+Repeat_but = pygame.image.load("Images/Repeat.png").convert_alpha()
+Shuffle_but = pygame.image.load("Images/Shuffle.png").convert_alpha()
+Pressed_anim = pygame.image.load("Images/Pressed.png").convert_alpha()
+Backround_texture = pygame.image.load("Images/Backround texture.png").convert_alpha()
+Backround_dragon = pygame.image.load("Images/Backround.png").convert_alpha()
+Backrount_Desine = pygame.image.load("Images/Backround Desine.png").convert_alpha()
+Folder_But = pygame.image.load("Images/Folder.png").convert_alpha()
+
+#ajusting the images transparanci
+
+Backround_texture.set_alpha(50)    #Backround Dots
+Backround_dragon.set_alpha(75)  # Backround dragon
+Backrount_Desine.set_alpha(70)   #Backround waves
+
+#Creating The Buttons Class
+class Buttons():
+    def __init__(self, image, x_pos,y_pos, scale=1):
+        width = image.get_width()
+        height = image.get_height()
+        self.image = pygame.transform.scale(image, (int(width * scale), (int(height * scale))))
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x_pos,y_pos)
+        self.clicked = False
+    def draw(self):
+        action = False
+        #get mous position
+        pos = pygame.mouse.get_pos()
+        #chec mausover or clicked condition
+        if self.rect.collidepoint(pos):
+           if pygame.mouse.get_pressed()[0] == 1 and self.clicked == False:
+                self.clicked = True
+                action = True
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+        #Draw button
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+        return action
+
+#Adding picture and text on the screen
+def Add_img(image, x, y, scale):
+    width = image.get_width()
+    height = image.get_height()
+    picture = pygame.transform.scale(image, (int(width * scale), (int(height * scale))))
+    rect = picture.get_rect()
+    rect.topleft = (x, y)
+    screen.blit(picture, (rect.x, rect.y))
+
+def Add_text(text, x, y, scale=15, font= "Arail", Color= "white"):
+    Textfont_size = pygame.font.SysFont(f"{font}",scale)
+    Text = Textfont_size.render(str(text), 1, Color)
+    screen.blit(Text, (x, y))
+
+
+#Making the functions
+
+#Selecting the muzic Folder making some variable and adding the muzic to the list
+Muzic_List = ["Blak"]
+Songs_count = 0
+Has_loaded_songs = False
+StartUp = True
+def Add_Muzic():
+    global No_Muzic_Loaded_Error
+    Muzic_Folder = promter.dir()
+    Muzic_Files = os.listdir(Muzic_Folder)
+    global Songs_count
+    Songs_count = len(Muzic_Files)
+    global Has_loaded_songs
+    for i in Muzic_Files:
+        Muzic_list_prep = (f"{Muzic_Folder}\{i}")
+        Muzic_List.append(Muzic_list_prep)
+    Has_loaded_songs = True
+    global StartUp
+    if StartUp == True:
+        mixer.music.load(Muzic_List[1])
+        mixer.music.play(Repeat_active)
+        mixer.music.pause()
+        StartUp = False
+    No_Muzic_Loaded_Error = False
+
+No_Muzic_Loaded_Error = False
+def No_music_loaded():
+    global No_Muzic_Loaded_Error
+    print("No muzic loaded!")
+    print("Please load muzic folder!")
+    No_Muzic_Loaded_Error = True
+
+
+Repeat_active = 0
+def Repeat():
+    global Repeat_active
+    if Repeat_active == 0:
+        Repeat_active = -1
+        print("Repeating activ")
+    elif Repeat_active == -1:
+        Repeat_active = 0
+        print("Reapining off")
+
+Shuffle_activated = False
+Shuffle_one_time_action = False
+Curently_playing = 1
+def Shuffle():
+    global Shuffle_activated
+    global Curently_playing
+    if Shuffle_activated == False:
+        Shuffle_activated = True
+        global Last_Played
+        global Shuffle_one_time_action
+        Last_Played = Curently_playing
+        Shuffle_one_time_action = True
+    elif Shuffle_activated == True:
+        Shuffle_activated = False
+
+Muzic_Paused = True
+def Pause_Button():
+    global Muzic_Paused
+    if Muzic_Paused == True and Has_loaded_songs == True:
+        mixer.music.unpause()
+        Muzic_Paused = False
+    elif Muzic_Paused == False and Has_loaded_songs == True:
+        mixer.music.pause()
+        Muzic_Paused = True
+    elif Has_loaded_songs == False:
+        No_music_loaded()
+
+
+def Next():
+    global Curently_playing
+    global Repeat_active
+    global Muzic_Paused
+    if Shuffle_activated == True and not Curently_playing == Songs_count:
+        Ranndom_song = random.randint(1, Songs_count)
+        mixer.music.load(Muzic_List[Ranndom_song])
+        mixer.music.play(Repeat_active)
+        Curently_playing = Ranndom_song
+        if Muzic_Paused == True:
+            mixer.music.pause()
+    elif Songs_count > Curently_playing and Has_loaded_songs == True:
+        mixer.music.load(Muzic_List[Curently_playing + 1])
+        mixer.music.play(Repeat_active)
+        Curently_playing = Curently_playing + 1
+        if Muzic_Paused == True:
+            mixer.music.pause()
+    elif Songs_count == Curently_playing and Has_loaded_songs == True:
+        mixer.music.load(Muzic_List[1])
+        mixer.music.play(Repeat_active)
+        Curently_playing = 1
+        if Muzic_Paused == True:
+            mixer.music.pause()
+    elif Has_loaded_songs == False:
+        No_music_loaded()
+
+def Reverse():
+    global Curently_playing
+    global Repeat_active
+    global Muzic_Paused
+    global Shuffle_one_time_action
+    if Shuffle_activated == True and Shuffle_one_time_action == True:
+        mixer.music.load(Muzic_List[Last_Played])
+        mixer.music.play(Repeat_active)
+        Curently_playing = Last_Played
+        Shuffle_one_time_action = False
+        if Muzic_Paused == True:
+            mixer.music.pause()
+    elif Curently_playing > 1 and Has_loaded_songs == True:
+        mixer.music.load(Muzic_List[Curently_playing - 1])
+        mixer.music.play(Repeat_active)
+        Curently_playing = Curently_playing - 1
+        if Muzic_Paused == True:
+            mixer.music.pause()
+    elif Curently_playing == 1 and Has_loaded_songs == True:
+        mixer.music.load(Muzic_List[Songs_count])
+        mixer.music.play(Repeat_active)
+        Curently_playing = Songs_count
+        if Muzic_Paused == True:
+            mixer.music.pause()
+    elif Has_loaded_songs == False:
+        No_music_loaded()
+
+mixer.music.set_volume(0.5)
+Current_Volume = 5
+Muted = False
+Mutted = 0
+def Mute():
+    global Muted
+    global Current_Volume
+    if Muted == False:
+        Muted = True
+        mixer.music.set_volume(Mutted)
+    elif Muted == True:
+        Muted = False
+        mixer.music.set_volume(Current_Volume)
+
+def Vol_Down():
+    global Muted
+    global Current_Volume
+    if Muted == True:
+        mixer.music.set_volume(Current_Volume)
+        Muted = False
+    elif Current_Volume <= 0:
+        print("Minimum Volume !")
+    elif Current_Volume > 0:
+        Current_Volume = Current_Volume - 1
+        mixer.music.set_volume(Current_Volume/10)
+    print(Current_Volume/10)
+def Vol_Up():
+    global Current_Volume
+    global Muted
+    if Muted == True:
+        mixer.music.set_volume(Current_Volume)
+        Muted = False
+    elif Current_Volume >= 10:
+        print("Maximum Volume !")
+    elif Current_Volume < 10:
+        Current_Volume = Current_Volume + 1
+        mixer.music.set_volume(Current_Volume/10)
+    print(Current_Volume/10)
+
+
+songsCnt_Currentlyply = "(0/0)"
+def songs_count_and_curently_playing():
+    global songsCnt_Currentlyply
+    if StartUp == False:
+        songsCnt_Currentlyply = (f"({Curently_playing}/{Songs_count})")
+        print(songsCnt_Currentlyply)
+
+#Plays the next song if the last one stopes
+mixer.music.set_endevent(1)
+
+#Making the buttons
+
+Exit_Button = Buttons(Exit_But, 358, 8, 0.075)
+Folder_Button = Buttons(Folder_But, 8, 9, 0.065)
+Paus_Button = Buttons(Paus_But, 165, 565, 0.15)
+Vol_Up_Button = Buttons(Vol_Up_But, 268.5, 589, 0.06)
+Vol_Down_Button = Buttons(Vol_Down_But, 113, 589, 0.065)
+Reverse_Button = Buttons(Reverse_But, 25, 578, 0.034)
+Next_Button = Buttons(Next_But, 330, 578, 0.034)
+Shuffle_button = Buttons(Shuffle_but, 110, 648, 0.07)
+Mute_Button = Buttons(Mute_But, 190, 647, 0.018)
+Repeat_button = Buttons(Repeat_but, 268, 647, 0.023)
+
+#Volume to %
+def Vol_To_Percentage():
+  Percentage_volume_Prep = Current_Volume * 10
+  Percentage_volume = (f"{Percentage_volume_Prep}%")
+  return Percentage_volume
+
+#Creating the main loop
+def main():
+    Run = True
+    FPS = 13
+    Clock = pygame.time.Clock()
+
+    while Run:
+        Clock.tick(FPS)
+
+        #Check for keys presed
+        event: Event
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                Run = False
+                print("Quiting the program!")
+                break
+            if event.type == mixer.music.get_endevent():
+                Next()
+                songs_count_and_curently_playing()
+
+        #filling the screen with a colors
+        screen.fill(Purple)
+
+        # adding images on the screen
+
+        Add_img(Backround_texture, 0, 0, 0.3)
+        Add_img(Backround_dragon, -17, 265,0.85)
+        Add_img(Backrount_Desine, 51, -3, 0.75)
+
+
+        #adding presed animation
+        if Muted == True:
+            Add_img(Pressed_anim, 183, 640, 0.05)
+        if Shuffle_activated == True:
+            Add_img(Pressed_anim, 103, 640, 0.05)
+        if Repeat_active == -1:
+            Add_img(Pressed_anim, 260, 640, 0.05)
+
+
+        #Drawing the button on screen
+
+        if Exit_Button.draw():
+            run = False
+            print("Quiting the program!")
+            break
+
+        if Folder_Button.draw():
+            Add_Muzic()
+            songs_count_and_curently_playing()
+
+        if Paus_Button.draw():
+            Pause_Button()
+            Add_img(Pressed_anim, 165, 565, 0.075)
+
+        if Vol_Up_Button.draw():
+            Vol_Up()
+            Add_img(Pressed_anim, 255, 574, 0.06)
+
+        if Vol_Down_Button.draw():
+            Vol_Down()
+            Add_img(Pressed_anim, 101, 574, 0.06)
+
+        if Reverse_Button.draw():
+            Reverse()
+            songs_count_and_curently_playing()
+            Add_img(Pressed_anim, 20, 568, 0.07)
+
+        if Next_Button.draw():
+            Next()
+            songs_count_and_curently_playing()
+            Add_img(Pressed_anim, 320, 568, 0.07)
+
+        if Shuffle_button.draw():
+            Shuffle()
+            songs_count_and_curently_playing()
+
+        if Mute_Button.draw():
+            Mute()
+
+        if Repeat_button.draw():
+            Repeat()
+
+        #Drawing text on the screen
+        Playing_or_paused = "Paused"
+        if Muzic_Paused == True:
+            Playing_or_paused = "Paused"
+        elif Muzic_Paused == False:
+            Playing_or_paused = "Playing"
+
+        if No_Muzic_Loaded_Error == True :
+            Add_text("Please click the folder button to add a muzic folder!",65, 5, 12, "Arial", "gray")
+            Add_text("No Muzic loaded !", 150, 20, 12, "Arial", "gray")
+
+        Add_text(f"{songsCnt_Currentlyply}", 5, 677, 17, "Arial", "gray")
+        Add_text(f"{Vol_To_Percentage()} Volume", 310, 680, 14, "Arial", "gray")
+        Add_text(Playing_or_paused, 175, 685, 12, "Arial", "black")
+
+
+        #Updating the screen
+        pygame.display.update()
+
+
+#Calling the main loop
+main()
+pygame.quit()
